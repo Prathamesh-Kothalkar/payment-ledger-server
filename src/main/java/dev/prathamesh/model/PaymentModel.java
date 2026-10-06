@@ -73,6 +73,13 @@ public class PaymentModel {
         length = 100
     )
     private String idempotencyKey;
+    
+    @Column(
+    	    name = "request_hash",
+    	    nullable = false,
+    	    length = 64
+    	)
+    	private String requestHash;
 
     @Column(
         name = "created_at",
@@ -99,17 +106,19 @@ public class PaymentModel {
     }
 
     public PaymentModel(
-        Long sourceAccountId,
-        Long destinationAccountId,
-        BigDecimal amount,
-        String idempotencyKey
-    ) {
-        this.sourceAccountId = sourceAccountId;
-        this.destinationAccountId = destinationAccountId;
-        this.amount = amount;
-        this.idempotencyKey = idempotencyKey;
-        this.status = PaymentStatus.PENDING;
-    }
+    	    Long sourceAccountId,
+    	    Long destinationAccountId,
+    	    BigDecimal amount,
+    	    String idempotencyKey,
+    	    String requestHash
+    	) {
+    	    this.sourceAccountId = sourceAccountId;
+    	    this.destinationAccountId = destinationAccountId;
+    	    this.amount = amount;
+    	    this.idempotencyKey = idempotencyKey;
+    	    this.requestHash = requestHash;
+    	    this.status = PaymentStatus.PENDING;
+    	}
 
     @PrePersist
     protected void onCreate() {
@@ -161,6 +170,10 @@ public class PaymentModel {
 
     public void setStatus(PaymentStatus status) {
         this.status = status;
+    }
+    
+    public String getRequestHash() {
+        return requestHash;
     }
 }
 
