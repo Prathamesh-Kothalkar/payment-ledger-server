@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import dev.prathamesh.model.AccountModel;
-
+import dev.prathamesh.types.AccountType;
 import jakarta.persistence.LockModeType;
 
 public interface AccountRepository
@@ -23,4 +23,6 @@ public interface AccountRepository
     Optional<AccountModel> findByIdForUpdate(
             @Param("id") Long id
     );
+    
+    Optional<AccountModel> findFirstByType(AccountType type);
 }

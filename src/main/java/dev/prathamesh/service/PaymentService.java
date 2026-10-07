@@ -22,18 +22,18 @@ import dev.prathamesh.types.PaymentStatus;
 @Service
 public class PaymentService {
 
-    private final PaymentRepository paymentRepository;
-    private final AccountRepository accountRepository;
-    private final TransactionTemplate transactionTemplate;
+	private final PaymentRepository paymentRepository;
+	private final LedgerService ledgerService;
+	private final TransactionTemplate transactionTemplate;
 
-    public PaymentService(
-            PaymentRepository paymentRepository,
-            AccountRepository accountRepository,
-            TransactionTemplate transactionTemplate) {
-        this.paymentRepository = paymentRepository;
-        this.accountRepository = accountRepository;
-        this.transactionTemplate = transactionTemplate;
-    }
+	public PaymentService(
+	        PaymentRepository paymentRepository,
+	        LedgerService ledgerService,
+	        TransactionTemplate transactionTemplate) {
+	    this.paymentRepository = paymentRepository;
+	    this.ledgerService = ledgerService;
+	    this.transactionTemplate = transactionTemplate;
+	}
 
     public PaymentModel transfer(PaymentRequest request) {
 
@@ -109,39 +109,13 @@ public class PaymentService {
 
     private void executeTransfer(Long paymentId, PaymentRequest request) {
 
-        Long senderId = request.senderAccount();
-        Long receiverId = request.receiverAccount();
-        BigDecimal amount = request.amount();
-
-        // Fix 2: always lock the lower id first, so A->B and B->A can't deadlock
-        Long firstId = Math.min(senderId, receiverId);
-        Long secondId = Math.max(senderId, receiverId);
-
-        AccountModel first = lockAccount(firstId);
-        AccountModel second = lockAccount(secondId);
-
-        AccountModel sender = first.getId().equals(senderId) ? first : second;
-        AccountModel receiver = (sender == first) ? second : first;
-
-        if (sender.getBalance().compareTo(amount) < 0) {
-            throw new IllegalArgumentException("Insufficient balance");
-        }
-
-        sender.setBalance(sender.getBalance().subtract(amount));
-        receiver.setBalance(receiver.getBalance().add(amount));
-        accountRepository.save(sender);
-        accountRepository.save(receiver);
+        ledgerService.post(paymentId,
+                request.senderAccount(), request.receiverAccount(), request.amount());
 
         PaymentModel payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new IllegalStateException("Payment not found"));
         payment.setStatus(PaymentStatus.SUCCESS);
         paymentRepository.save(payment);
-    }
-
-    private AccountModel lockAccount(Long id) {
-        return accountRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Account " + id + " not found"));
     }
 
     private void markFailed(Long paymentId) {
@@ -170,11 +144,19 @@ public class PaymentService {
     }
 
     private void validateRequest(PaymentRequest request) {
+    	
+    	
         if (request == null) {
             throw new IllegalArgumentException("Payment request cannot be null");
         }
+        
         if (request.idempotencyKey() == null || request.idempotencyKey().isBlank()) {
             throw new IllegalArgumentException("Idempotency key is required");
         }
+        
+        if (request.senderAccount() != null
+    	        && request.senderAccount().equals(ledgerService.systemAccountId())) {
+    	    throw new IllegalArgumentException("Invalid sender account");
+    	}
     }
 }

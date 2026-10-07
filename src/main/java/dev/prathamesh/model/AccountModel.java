@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 
+import dev.prathamesh.types.AccountType;
+
 @Entity
 @Table(
     name = "accounts",
@@ -37,6 +39,10 @@ public class AccountModel {
         scale = 4
     )
     private BigDecimal balance = BigDecimal.ZERO;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_type", nullable = false, length = 10)
+    private AccountType type = AccountType.USER;
 
     @Version
     @Column(
@@ -49,9 +55,14 @@ public class AccountModel {
         // Required by JPA
     }
 
-    public AccountModel(Long userId) {
+    public AccountModel(Long userId, AccountType type) {
         this.userId = userId;
+        this.type=type;
         this.balance = BigDecimal.ZERO;
+    }
+    
+    public AccountType getType() {
+    	return type;
     }
 
     public Long getId() {
