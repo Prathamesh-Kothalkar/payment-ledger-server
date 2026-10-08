@@ -22,7 +22,7 @@ public interface PaymentRepository extends JpaRepository<PaymentModel, Long> {
         UPDATE PaymentModel p
         SET p.status = :to, p.updatedAt = :now
         WHERE p.id = :id AND p.status = :from
-    """)
+    """) 
     int transition(
             @Param("id") Long id,
             @Param("from") PaymentStatus from,
