@@ -8,14 +8,20 @@ import java.time.Instant;
 import java.util.HexFormat;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import dev.prathamesh.exception.IdempotencyConflictException;
+import dev.prathamesh.exception.ResourceNotFoundException;
 import dev.prathamesh.model.AccountModel;
 import dev.prathamesh.model.PaymentModel;
+import dev.prathamesh.model.UserModel;
 import dev.prathamesh.repository.AccountRepository;
 import dev.prathamesh.repository.PaymentRepository;
+import dev.prathamesh.repository.UserRepository;
 import dev.prathamesh.types.PaymentRequest;
 import dev.prathamesh.types.PaymentStatus;
 
@@ -25,17 +31,29 @@ public class PaymentService {
 	private final PaymentRepository paymentRepository;
 	private final LedgerService ledgerService;
 	private final TransactionTemplate transactionTemplate;
+	private final UserRepository userRepository;
 
 	public PaymentService(
 	        PaymentRepository paymentRepository,
 	        LedgerService ledgerService,
+	        UserRepository userRepository,
 	        TransactionTemplate transactionTemplate) {
 	    this.paymentRepository = paymentRepository;
 	    this.ledgerService = ledgerService;
+	    this.userRepository=userRepository;
 	    this.transactionTemplate = transactionTemplate;
 	}
 
     public PaymentModel transfer(PaymentRequest request) {
+    	
+    	
+    	Long senderId = request.senderAccount();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserModel currUser=userRepository.findById(senderId).orElseThrow(()-> new ResourceNotFoundException("User not found expection"));
+        
+        if(!authentication.getName().equals(currUser.getEmail())) {
+        	throw new AccessDeniedException("You don't have access to send money");
+        }
 
         validateRequest(request);
         String hash = fingerprint(request);

@@ -10,6 +10,7 @@ import dev.prathamesh.model.UserModel;
 import dev.prathamesh.repository.AccountRepository;
 import dev.prathamesh.repository.UserRepository;
 import dev.prathamesh.types.AccountType;
+import dev.prathamesh.types.UserRole;
 
 @Component
 public class SystemAccountInitializer implements ApplicationRunner {
@@ -26,7 +27,7 @@ public class SystemAccountInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         if (accountRepository.findFirstByType(AccountType.SYSTEM).isEmpty()) {
-            UserModel systemUser = userRepository.save(new UserModel("SYSTEM", "system@ledger.internal"));
+            UserModel systemUser = userRepository.save(new UserModel("SYSTEM", "system@ledger.internal", null, UserRole.ADMIN));
             accountRepository.save(new AccountModel(systemUser.getId(), AccountType.SYSTEM));
         }
     }

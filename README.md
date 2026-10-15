@@ -49,6 +49,13 @@ It is designed around problems commonly found in payment systems rather than a s
   * Creates a system account automatically when the application starts.
   * New users receive an initial system-funded balance through the same ledger mechanism.
 
+* **Stateless JWT Authentication & Spring Security**
+
+  * Password hashing using BCrypt.
+  * Stateless token generation, validation, and claims extraction via JJWT (`HS256`/`HS384`).
+  * Endpoints for user registration (`/api/v1/auth/register`), login (`/api/v1/auth/login`), and profile inspection (`/api/v1/auth/me`).
+  * Protected ledger and payment APIs requiring `Authorization: Bearer <token>`.
+
 ## Architecture
 
 ```text
@@ -385,6 +392,8 @@ Ledger entries are immutable after creation.
 | --------------- | ------------------------------- |
 | Java 21         | Application development         |
 | Spring Boot     | Backend framework               |
+| Spring Security | Authentication and authorization|
+| JJWT            | Stateless JSON Web Token auth   |
 | Spring Web MVC  | REST APIs                       |
 | Spring Data JPA | Persistence layer               |
 | Hibernate       | ORM                             |
@@ -400,13 +409,15 @@ src/main/java/dev/prathamesh
 │   └── SystemAccountInitializer.java
 │
 ├── controller
+│   ├── AuthController.java
 │   ├── LedgerController.java
 │   ├── PaymentController.java
 │   └── UserController.java
 │
 ├── exception
 │   ├── GlobalException.java
-│   └── IdempotencyConflictException.java
+│   ├── IdempotencyConflictException.java
+│   └── ResourceNotFoundException.java
 │
 ├── model
 │   ├── AccountModel.java
@@ -420,7 +431,16 @@ src/main/java/dev/prathamesh
 │   ├── PaymentRepository.java
 │   └── UserRepository.java
 │
+├── security
+│   ├── CustomUserDetailsService.java
+│   ├── JwtAuthenticationEntryPoint.java
+│   ├── JwtAuthenticationFilter.java
+│   ├── JwtService.java
+│   ├── SecurityConfig.java
+│   └── UserPrincipal.java
+│
 ├── service
+│   ├── AuthService.java
 │   ├── LedgerService.java
 │   ├── PaymentService.java
 │   └── UserService.java
@@ -428,11 +448,16 @@ src/main/java/dev/prathamesh
 └── types
     ├── AccountBalanceResponse.java
     ├── AccountType.java
+    ├── AuthResponse.java
     ├── EntryDirection.java
     ├── LedgerVerifyResponse.java
+    ├── LoginRequest.java
     ├── PaymentRequest.java
     ├── PaymentResponse.java
-    └── PaymentStatus.java
+    ├── PaymentStatus.java
+    ├── RegisterRequest.java
+    ├── UserProfileResponse.java
+    └── UserRole.java
 ```
 
 ## Getting Started
@@ -542,7 +567,8 @@ This allows the service to detect inconsistencies instead of relying on a single
 
 Potential extensions include:
 
-* Authentication and authorization
+* Refresh token rotation
+* Role-based access control (RBAC) fine-tuning for admin-only ledger verification
 * Payment retry workflow for failed transactions
 * Refund processing
 * Pagination for transaction history
