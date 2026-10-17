@@ -1,6 +1,7 @@
 package dev.prathamesh.repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,5 +30,9 @@ public interface PaymentRepository extends JpaRepository<PaymentModel, Long> {
             @Param("to") PaymentStatus to,
             @Param("now") Instant now);
     
+    List<PaymentModel> findBySourceAccountIdOrDestinationAccountId(
+    	    Long sourceAccountId,
+    	    Long destinationAccountId
+    	);
   
 }

@@ -25,7 +25,7 @@ public class LedgerService {
     private final AccountRepository accountRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private volatile Long systemAccountId;
-
+    	
     public LedgerService(AccountRepository accountRepository,
                          LedgerEntryRepository ledgerEntryRepository) {
         this.accountRepository = accountRepository;
@@ -84,6 +84,9 @@ public class LedgerService {
 
     @Transactional(readOnly = true)
     public LedgerVerifyResponse verify() {
+    	
+    	
+    	
         BigDecimal total = ledgerEntryRepository.totalNet();
         if (total == null) total = BigDecimal.ZERO;
 

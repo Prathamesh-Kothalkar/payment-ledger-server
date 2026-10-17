@@ -6,6 +6,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.List;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,6 +24,7 @@ import dev.prathamesh.repository.AccountRepository;
 import dev.prathamesh.repository.PaymentRepository;
 import dev.prathamesh.repository.UserRepository;
 import dev.prathamesh.types.PaymentRequest;
+import dev.prathamesh.types.PaymentResponse;
 import dev.prathamesh.types.PaymentStatus;
 
 @Service
@@ -176,5 +178,17 @@ public class PaymentService {
     	        && request.senderAccount().equals(ledgerService.systemAccountId())) {
     	    throw new IllegalArgumentException("Invalid sender account");
     	}
+    }
+    
+    //history
+    public List<PaymentModel> getHistory(Long id){
+    	
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserModel currUser=userRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("User not found expection"));
+        
+        if(!authentication.getName().equals(currUser.getEmail())) {
+        	throw new AccessDeniedException("You don't have access to resources");
+        }
+    	return paymentRepository.findBySourceAccountIdOrDestinationAccountId(id, id);
     }
 }
