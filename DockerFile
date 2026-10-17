@@ -1,3 +1,5 @@
+# This is a Dockerfile for building and running a Java application
+
 # Stage 1: Build
 FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
